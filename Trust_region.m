@@ -43,7 +43,7 @@ Max_Iterations = 2500;
 
 % Initial conditions to give a whirl
 x0one = [-1.2, 1];
-%x0two = [2.8, 4];
+%x0one = [2.8, 4];
 
 % Pick an initial condition (!!!)
 Initial_condition = x0one;
@@ -122,6 +122,9 @@ while (stop_bool == false)
         else % if the Newtwon step is outside of T_k but the SD Mk minimizer is inside T_k
             % Initialize the tau parameter
             tau = 1;
+
+            % initalize the dogleg vector
+            P_k = Psteepest_k;
 
             % Choose the tau parameter tau_star that gives the dogleg exit point for T_k
             while ((norm(P_k) < D_k) && (tau <= 2))
