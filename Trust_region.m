@@ -26,8 +26,8 @@ Mk =@(x1,x2,x1k,x2k) MyRosenbrock(x1k, x2k) + [x1 - x1k, x2 - x2k]*Grad_f(x1k, x
 %% Perform a trust-region optimization algorithm
 
 % Choose a trust-region technique (!!!)
-Trust_region_technique = "dogleg";
-%Trust_region_technique = "cauchy_point";
+%Trust_region_technique = "dogleg";
+Trust_region_technique = "cauchy_point";
 
 
 % Steepest descent: unit vector in direction of negative gradient
@@ -39,7 +39,7 @@ Newton_Pk =@(x1,x2) -Hinv(x1,x2)*Grad_f(x1, x2);
 % Set the stopping criterion parameters
 Stop_Value = 10^(-8);
 Stop_Crit =@(x1, x2) norm(Grad_f(x1,x2)); % norm of the gradient
-Max_Iterations = 2500;
+Max_Iterations = 25000;
 
 % Initial conditions to give a whirl
 x0one = [-1.2, 1];
@@ -93,15 +93,15 @@ while (stop_bool == false)
     % Cauchy point computation
     if (Trust_region_technique == "cauchy_point")
         % tau condition
-        tau_condition = Grad_f(x_k(1), x_k(2))'*H(x_k(1), x_k(2))*Grad_f(x_k(1), x_k(2));
+        tau_condition = Grad_f(x_k(1),x_k(2))'*H(x_k(1),x_k(2))*Grad_f(x_k(1),x_k(2));
 
         % determine what tau is
         if (tau_condition <= 0)
             tau_k = 1;
         else
-            tau_k = min(1, (norm(Grad_f(x_k(1), x_k(2)))^3)/(D_k * tau_condition));
+            tau_k = min(1, norm(Grad_f(x_k(1), x_k(2)))^3/(D_k * tau_condition));
         end
-        P_k = -tau_k*D_k*Steepest_step;
+        P_k = tau_k*D_k*Steepest_step;
     end
     
     % Dogleg point computation
@@ -235,7 +235,7 @@ plot3(xkHist1(end), xkHist2(end), MyRosenbrock(xkHist1(end), xkHist2(end)),...
     'ro','MarkerSize',6,'MarkerFaceColor','r')
 hold on
 dx = 0.01;
-[L, R] = deal(-1.5, 1.5);
+[L, R] = deal(-1.5,1.5);
 dy = 0.01;
 [D, U] = deal(-2, 3);
 [X1, X2] = meshgrid(L:dx:R, D:dy:U);
