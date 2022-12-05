@@ -8,7 +8,7 @@ fs = 14;
 %% Set up for Gauss-Newton
 
 % Define the grid spacing (treating 0 = 2*pi)
-Nphi = 25;    % Number of phi mesh points
+Nphi = 50;    % Number of phi mesh points
 Ntheta = Nphi;  % Number of theta mesh points
 dphi = (2*pi)/(Nphi - 1);     % Phi mesh density
 dtheta = (2*pi)/(Ntheta - 1); % Theta mesh density
@@ -41,7 +41,7 @@ wu =@(phi,theta) A + B(phi,theta);            % Up weight
 wd =@(phi,theta) A - B(phi,theta);            % Down weight
 
 % Define the temporal frequency of the solution we're looking for
-omega = 1;
+omega = -3; %-1 converges to background = sqrt(mu) on ones
 
 % Create the Delta2D and D matrices
 Delta2D = Delta2d(wc,wl,wr,wu,wd,Phi,Theta);
@@ -58,7 +58,26 @@ gradf =@(v) Jacobian(Delta2D,v,omega)'*r(v);
 stop_crit = 1E-6;
 
 % Set initial seed
-v0 = 10*sech(ones(2*Nphi^2,1));
+% (Convergence nice-ness depends a lot on small grid size)
+mu = -omega;
+%v0 = 10*ones(2*Nphi^2,1); % converges nicely to sqrt(mu)
+% Maybe go for dark soliton stripe in toroidal direction (?)
+figure (1)
+%seed = sqrt(-omega)*repmat(tanh(Theta-pi)',1,Nphi);
+seed = sqrt(-omega)*repmat(tanh(Theta-pi)',1,Nphi);
+v0 = reshape(seed',[Nphi*Ntheta,1]);
+v0 = [v0;zeros(Nphi*Ntheta,1)];
+
+% Plot the initial seed
+zoo = mesh(abs(seed).^2,'FaceAlpha','0.7');
+colorbar
+z00.FaceColor = 'flat';
+colormap autumn
+xlabel('$\phi/\Delta\phi$','Interpreter','latex','FontSize',fs)
+ylabel('$\theta/\Delta\theta$','Interpreter','latex','FontSize',fs)
+zlabel('Density, $|v_0|^2$','Interpreter','latex','FontSize',fs)
+title("Initial seed $v_0$, for $\mu = $"+(-omega),'Interpreter',...
+    'latex','FontSize',fs)
 
 % Initialize loop variables
 vold = v0;
@@ -83,8 +102,8 @@ while (abs(f(vold)) > stop_crit)
     vnew = vold + p;
 
     % Record the updated variables (push variables into history vector)
-    fHistory(k + 1) = f(vold);
-    GradientHistory(k + 1) = norm(gradf(vold));
+    fHistory(k + 1) = f(vnew);
+    GradientHistory(k + 1) = norm(gradf(vnew));
 
     % Update loop variables
     vold = vnew;
@@ -92,7 +111,20 @@ while (abs(f(vold)) > stop_crit)
 end
 
 % Define the field that we've converged to
-v = vold;
+v = vold(1:end/2) + 1i*vold(end/2+1:end);
+psi = v*exp(omega*1i);          % The wavefunction
+Density2d = abs(psi2D(psi,Nphi,Ntheta)').^2; % Density of solution
+
+% Plot the mod-square of the solution
+figure (2)
+s = mesh(Density2d,'FaceAlpha','0.7');
+colorbar
+s.FaceColor = 'flat';
+colormap autumn
+xlabel('$\phi$','Interpreter','latex','FontSize',fs)
+ylabel('$\theta$','Interpreter','latex','FontSize',fs)
+zlabel('Density, $|\psi|^2$','Interpreter','latex','FontSize',fs)
+title("Computed Steady State, $\mu = $"+(-omega),'Interpreter','latex','FontSize',fs)
 
 
 %% Generate a report of the performance of the algorithm
@@ -118,7 +150,7 @@ fprintf('The last 5 iterations of the algorithm looked like:\n')
 disp(LastFiveTable)
 
 % Make some charts of more algorithm stats
-figure (1)
+figure (3)
 semilogy(klist, fHistory)
 xlabel('Iteration number, $k$','Interpreter','latex','FontSize',fs)
 ylabel('Objective function, $|f(\textbf{v}_k)|$','Interpreter','latex','FontSize',fs)
@@ -198,4 +230,9 @@ function J = Jacobian(Delta2D,v,omega)
 
     % Put it all together
     J = [J11, J12; J12, J22];
+end
+
+% Define a function for converting a 'v'-type vector into a 2D grid
+function wavefunction = psi2D(v,Nphi,Ntheta)
+    wavefunction = reshape(v,[Nphi,Ntheta]);
 end
