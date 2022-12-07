@@ -1,6 +1,6 @@
 %% Numerical steady states to the NLS
 % On the surface of the elongated torus
-clear, clc;
+clear, clc, clf;
 
 % Fontsize, for plotting
 fs = 14;
@@ -8,7 +8,7 @@ fs = 14;
 %% Set up for Gauss-Newton
 
 % Define the grid spacing (treating 0 = 2*pi)
-Nphi = 50;    % Number of phi mesh points
+Nphi = 25;    % Number of phi mesh points
 Ntheta = Nphi;  % Number of theta mesh points
 dphi = (2*pi)/(Nphi - 1);     % Phi mesh density
 dtheta = (2*pi)/(Ntheta - 1); % Theta mesh density
@@ -40,6 +40,8 @@ wr =@(phi,theta) C(phi,theta) + D(phi,theta); % Right weight
 wu =@(phi,theta) A + B(phi,theta);            % Up weight
 wd =@(phi,theta) A - B(phi,theta);            % Down weight
 
+rtube = r;
+
 % Define the temporal frequency of the solution we're looking for
 omega = -3; %-1 converges to background = sqrt(mu) on ones
 
@@ -64,14 +66,17 @@ mu = -omega;
 % Maybe go for dark soliton stripe in toroidal direction (?)
 figure (1)
 %seed = sqrt(-omega)*repmat(tanh(Theta-pi)',1,Nphi);
-seed = sqrt(-omega)*repmat(tanh(Theta-pi)',1,Nphi);
+% for above, N=25 converges to dual stripes, N=50 converges to soliton(???)
+%seed = sqrt(-omega)*repmat(tanh(Theta-pi)',1,Nphi); % converges to double stripe for N=75, mu = 3
+% SHOULD RESCALE THE TANH
+seed = sqrt(-omega)*repmat(sqrt(-omega)*tanh(Theta-pi)',1,Nphi);
 v0 = reshape(seed',[Nphi*Ntheta,1]);
 v0 = [v0;zeros(Nphi*Ntheta,1)];
 
 % Plot the initial seed
 zoo = mesh(abs(seed).^2,'FaceAlpha','0.7');
 colorbar
-z00.FaceColor = 'flat';
+zoo.FaceColor = 'flat';
 colormap autumn
 xlabel('$\phi/\Delta\phi$','Interpreter','latex','FontSize',fs)
 ylabel('$\theta/\Delta\theta$','Interpreter','latex','FontSize',fs)
@@ -121,8 +126,8 @@ s = mesh(Density2d,'FaceAlpha','0.7');
 colorbar
 s.FaceColor = 'flat';
 colormap autumn
-xlabel('$\phi$','Interpreter','latex','FontSize',fs)
-ylabel('$\theta$','Interpreter','latex','FontSize',fs)
+xlabel('$\phi/\Delta\phi$','Interpreter','latex','FontSize',fs)
+ylabel('$\theta/\Delta\theta$','Interpreter','latex','FontSize',fs)
 zlabel('Density, $|\psi|^2$','Interpreter','latex','FontSize',fs)
 title("Computed Steady State, $\mu = $"+(-omega),'Interpreter','latex','FontSize',fs)
 
@@ -156,6 +161,50 @@ xlabel('Iteration number, $k$','Interpreter','latex','FontSize',fs)
 ylabel('Objective function, $|f(\textbf{v}_k)|$','Interpreter','latex','FontSize',fs)
 title('Gauss-Newton Convergence','Interpreter','latex','FontSize',fs)
 grid on
+
+
+%% Wrap the solution onto the torus
+
+
+% utorus = linspace(0,2*pi);
+% vtorus = linspace(0,2*pi);
+% 
+% [Utorus,Vtorus] = meshgrid(utorus,vtorus);
+% 
+% Xtorus = (a + rtube.*cos(Vtorus)).*cos(Utorus);
+% Ytorus = (b + rtube.*cos(Vtorus)).*sin(Utorus);
+% Ztorus = rtube.*sin(Vtorus);
+% 
+% surf(Xtorus, Ytorus, Ztorus);
+% %colormap('gray')
+% shading interp;
+% axis equal;
+% grid on
+% xlabel('$x$','Interpreter','latex')
+% ylabel('$y$','Interpreter','latex')
+% zlabel('$z$','Interpreter','latex')
+
+% MAKE A MATRIX OF COLORS
+% Then plot (x(phi(i),theta(j)), y(phi(i),theta(j)), z(phi(i),theta(j)), ColorMatrix(i,j))
+ColorMatrix = Density2d/mu;
+
+phi = linspace(0,2*pi,Nphi);
+theta = linspace(0,2*pi,Ntheta);
+
+X =@(phi,theta) (a + rtube.*cos(theta)).*cos(phi);
+Y =@(phi,theta) (b + rtube.*cos(theta)).*sin(phi);
+Z =@(phi,theta) rtube.*sin(theta);
+
+%  plot3(X,Y,Z,'Color', [ColorMatrix(i,j), ColorMatrix(i,j), ColorMatrix(i,j)])
+figure (4);
+for j = 1:Ntheta
+    for i = 1:Nphi
+        hold on
+        plot3(X(phi(i),theta(j)), Y(phi(i),theta(j)), Z(phi(i),theta(j)),'x')
+    end
+end
+grid on
+axis equal
 
 
 %% Helper functions
