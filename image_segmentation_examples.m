@@ -300,37 +300,3 @@ classNames = ["triangle", "background"];
 labelIDS = [255, 0];
 
 triangles_labels = pixelLabelDatastore(triangles_label_path, classNames, labelIDS);
-
-
-%% Convolution neural network
-% Pooling layers --> wavelets
-
-% Using the 'CamVid' dataset from Cambridge researchers
-% This is pixel-labeled images with 32 classes (car, ped, road, ...)
-
-% Dataset importing instructions and helper functions
-% See: https://www.mathworks.com/help/vision/ug/semantic-segmentation-with-deep-learning.html
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
