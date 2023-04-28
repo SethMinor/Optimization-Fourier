@@ -226,8 +226,60 @@ figure (6)
 imshow(fig_overlay)
 
 % --- PART 2 ---
+% Create the neural net
 
+layers = [
+    % ------------------------------------------------------
+    % DOWN-SAMPLING LAYERS
+    % Input layer (RGB images)
+    imageInputLayer([32, 32, 3])
 
+    % First convolutional layer, 32 3x3 filters
+    % Creates 32 feature maps
+    convolution2dLayer(3,32,'Padding',1)
 
+    % Activation function
+    reluLayer
 
+    % Down-sample by a factor of 2: max pooling layer (2x2)
+    maxPooling2dLayer(2,'Stride',2)
 
+    % First convolutional layer, 32 3x3 filters
+    % Creates 32 feature maps
+    convolution2dLayer(3,32,'Padding',1)
+
+    % Activation function
+    reluLayer
+
+    % Down-sample by a factor of 2: max pooling layer (2x2)
+    maxPooling2dLayer(2,'Stride',2)
+
+    % ------------------------------------------------------
+    % UP-SAMPLING LAYERS
+    % 'Tranposed deconvolution' for up-sampling by a factor of 2
+    % Syntax is 'transposedConv2dLayer(filterSize,numFilters,...)'
+    % 'Cropping'=1 is set so output size = 2*input size
+    transposedConv2dLayer(4,32,'Stride',2,'Cropping',1)
+
+    % Activation function
+    reluLayer
+    
+    % Second up-sampling by a factor of 2
+    transposedConv2dLayer(4,32,'Stride',2,'Cropping',1)
+
+    % Activation function
+    reluLayer
+
+    % ------------------------------------------------------
+    % PIXEL CLASSIFICATION LAYER
+    % Classifies an image same size as the input
+    % (Except that channel numbers goes from 3 --> large (num. filters)
+
+    % Squeeze the number of feature maps down to 3
+    convolution2dLayer(1,3)
+
+    % Softmax layer, turn activation values into PDF
+    softmaxLayer
+
+    % Tie each pixel to its predicted class, measure loss
+    pixelClassificationLayer];
