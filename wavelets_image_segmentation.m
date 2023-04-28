@@ -182,10 +182,10 @@ validation = test_data.Labels;
 accuracy = sum(predictions == validation)/numel(validation);
 
 
-%% Convolution neural network
+%% MatLab vision database
 % Pooling layers --> wavelets
 
-% Maybe base on this MatLab example:
+% MatLab example:
 %https://www.mathworks.com/help/vision/ug/getting-started-with-semantic-segmentation-using-deep-learning.html
 
 % --- PART 1 ---
@@ -225,7 +225,7 @@ fig_overlay = labeloverlay(Raw, Pix);
 figure (6)
 imshow(fig_overlay)
 
-% --- PART 2 ---
+% Convolution neural network
 % Create the neural net
 
 layers = [
@@ -283,3 +283,54 @@ layers = [
 
     % Tie each pixel to its predicted class, measure loss
     pixelClassificationLayer];
+
+% Train the neural net
+% Training data location (bunch of triangles)
+vision_data_path = fullfile(toolboxdir('vision'),'visiondata','triangleImages');
+triangles_data_path = fullfile(vision_data_path,'trainingImages');
+
+% Pixel-labeled pictures ("ground truth")
+triangles_label_path = fullfile(vision_data_path,'trainingLabels');
+
+% Create an image store for triangle pics
+triangles_data = imageDatastore(triangles_label_path);
+
+% Create an image store for ground truth pixel labels
+classNames = ["triangle", "background"];
+labelIDS = [255, 0];
+
+triangles_labels = pixelLabelDatastore(triangles_label_path, classNames, labelIDS);
+
+
+%% Convolution neural network
+% Pooling layers --> wavelets
+
+% Using the 'CamVid' dataset from Cambridge researchers
+% This is pixel-labeled images with 32 classes (car, ped, road, ...)
+
+% Dataset importing instructions and helper functions
+% See: https://www.mathworks.com/help/vision/ug/semantic-segmentation-with-deep-learning.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
