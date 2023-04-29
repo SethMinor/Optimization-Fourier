@@ -114,7 +114,7 @@ for image_no = 1:2
 end
 
 % Create the training data
-trainingData = combine(camvid_datastore, camvid_labelstore);
+training_data = combine(camvid_datastore, camvid_labelstore);
 
 % The neural network
 layers = [
@@ -177,7 +177,7 @@ layers = [
     % Tie each pixel to its predicted class, measure loss
     pixelClassificationLayer];
 
-opts = trainingOptions('sgdm', ...
+options = trainingOptions('sgdm', ...
     'InitialLearnRate',0.01, ...
     'MaxEpochs',4, ...
     'Shuffle', 'every-epoch', ...
@@ -186,7 +186,7 @@ opts = trainingOptions('sgdm', ...
     'Plots', 'training-progress');
 
 % Image segmentation model
-%neural_net = trainNetwork(training_data, layers, options);
+neural_net = trainNetwork(training_data, layers, options);
 
 % Final accuracy stats
 % Make predictions of test data
