@@ -123,29 +123,29 @@ layers = [
     % Input layer (RGB images)
     imageInputLayer([720, 960, 3])
 
-    % First convolutional layer, 2 3x3 filters
+    % First convolutional layer, 4 40x40 filters
     % Creates 2 feature maps
-    convolution2dLayer(3,2,'Padding','same')
+    convolution2dLayer(40,4,'Padding','same')
     % Activation function
     reluLayer
     % Down-sample by a factor of 2: max pooling layer (2x2)
     maxPooling2dLayer(2,'Stride',2)
     % 360 x 480
 
-    % Second convolutional layer, 4 3x3 filters
-    convolution2dLayer(3,4,'Padding','same')
+    % Second convolutional layer
+    convolution2dLayer(20,8,'Padding','same')
     reluLayer
     maxPooling2dLayer(2,'Stride',2)
     % 180 x 240
 
-    % Third convolutional layer, 8 3x3 filters
-    convolution2dLayer(3,8,'Padding','same')
+    % Third convolutional layer
+    convolution2dLayer(10,16,'Padding','same')
     reluLayer
     maxPooling2dLayer(2,'Stride',2)
     % 90 x 120
 
-    % Fourth convolutional layer, 16 3x3 filters
-    convolution2dLayer(3,16,'Padding','same')
+    % Fourth convolutional layer
+    convolution2dLayer(3,32,'Padding','same')
     reluLayer
     maxPooling2dLayer(2,'Stride',2)
     % 45 x 60
@@ -153,19 +153,19 @@ layers = [
     % ------------------------------------------------------
     % UP-SAMPLING LAYERS
     % 'Tranposed deconvolution' for up-sampling by a factor of 2
-    transposedConv2dLayer(4,16,'Stride',2,'Cropping',1)
+    transposedConv2dLayer(4,32,'Stride',2,'Cropping',1)
     reluLayer
 
     % Second 'Tranposed deconvolution' for up-sampling by a factor of 2
-    transposedConv2dLayer(4,8,'Stride',2,'Cropping',1)
+    transposedConv2dLayer(4,16,'Stride',2,'Cropping',1)
     reluLayer
     
     % Third up-sampling by a factor of 2
-    transposedConv2dLayer(4,4,'Stride',2,'Cropping',1)
+    transposedConv2dLayer(4,8,'Stride',2,'Cropping',1)
     reluLayer
 
     % Fourth up-sampling by a factor of 2
-    transposedConv2dLayer(4,2,'Stride',2,'Cropping',1)
+    transposedConv2dLayer(4,4,'Stride',2,'Cropping',1)
     reluLayer
 
     % ------------------------------------------------------
