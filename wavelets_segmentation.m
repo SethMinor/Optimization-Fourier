@@ -117,15 +117,18 @@ end
 training_data = combine(camvid_datastore, camvid_labelstore);
 
 % The neural network
+% Pooling layers
 layers = [
     % ------------------------------------------------------
     % DOWN-SAMPLING LAYERS
     % Input layer (RGB images)
     imageInputLayer([720, 960, 3])
 
-    % First convolutional layer, 4 40x40 filters
-    % Creates 2 feature maps
-    convolution2dLayer(40,4,'Padding','same')
+    % First convolutional layer, convolution2dLayer(filterSize,numFilters)
+    % Creates feature maps
+    convolution2dLayer(3,2,'Padding','same')
+    % Batch normalization
+    %batchNormalizationLayer
     % Activation function
     reluLayer
     % Down-sample by a factor of 2: max pooling layer (2x2)
@@ -133,19 +136,22 @@ layers = [
     % 360 x 480
 
     % Second convolutional layer
-    convolution2dLayer(20,8,'Padding','same')
+    convolution2dLayer(3,4,'Padding','same')
+    %batchNormalizationLayer
     reluLayer
     maxPooling2dLayer(2,'Stride',2)
     % 180 x 240
 
     % Third convolutional layer
-    convolution2dLayer(10,16,'Padding','same')
+    convolution2dLayer(3,8,'Padding','same')
+    %batchNormalizationLayer
     reluLayer
     maxPooling2dLayer(2,'Stride',2)
     % 90 x 120
 
     % Fourth convolutional layer
-    convolution2dLayer(3,32,'Padding','same')
+    convolution2dLayer(3,16,'Padding','same')
+    %batchNormalizationLayer
     reluLayer
     maxPooling2dLayer(2,'Stride',2)
     % 45 x 60
@@ -153,19 +159,16 @@ layers = [
     % ------------------------------------------------------
     % UP-SAMPLING LAYERS
     % 'Tranposed deconvolution' for up-sampling by a factor of 2
-    transposedConv2dLayer(4,32,'Stride',2,'Cropping',1)
-    reluLayer
-
-    % Second 'Tranposed deconvolution' for up-sampling by a factor of 2
     transposedConv2dLayer(4,16,'Stride',2,'Cropping',1)
     reluLayer
-    
-    % Third up-sampling by a factor of 2
+
     transposedConv2dLayer(4,8,'Stride',2,'Cropping',1)
     reluLayer
-
-    % Fourth up-sampling by a factor of 2
+    
     transposedConv2dLayer(4,4,'Stride',2,'Cropping',1)
+    reluLayer
+
+    transposedConv2dLayer(4,2,'Stride',2,'Cropping',1)
     reluLayer
 
     % ------------------------------------------------------
@@ -184,11 +187,97 @@ layers = [
 
 options = trainingOptions('sgdm', ...
     'InitialLearnRate',0.01, ...
-    'MaxEpochs', 10, ...
+    'MaxEpochs', 4, ...
     'Shuffle', 'every-epoch', ...
     'MiniBatchSize', 16, ...
     'Verbose', false, ...
     'Plots', 'training-progress');
 
 % Image segmentation model
-neural_net = trainNetwork(training_data, layers, options);
+%neural_net = trainNetwork(training_data, layers, options);
+
+% Wavelet
+wavelet_layers = [
+    % ------------------------------------------------------
+    % DOWN-SAMPLING LAYERS
+    % Input layer (RGB images)
+    imageInputLayer([720, 960, 3])
+
+    % First convolutional layer, convolution2dLayer(filterSize,numFilters)
+    % Creates feature maps
+    convolution2dLayer(3,3,'Padding','same')
+    % Batch normalization
+    batchNormalizationLayer
+    % Activation function
+    reluLayer
+    % Down-sample by WAVELET
+    %maxPooling2dLayer(2,'Stride',2)
+    functionLayer(@(X) my_haar2t(X))
+    %[x_ll, x_lh, x_hl, x_hh] = haart2(G, level)
+    % 360 x 480
+
+    % Second convolutional layer
+    convolution2dLayer(3,4,'Padding','same')
+    batchNormalizationLayer
+    reluLayer
+    %maxPooling2dLayer(2,'Stride',2)
+    functionLayer(@(X) my_haar2t(X))
+    % 180 x 240
+
+    % Third convolutional layer
+    convolution2dLayer(3,8,'Padding','same')
+    batchNormalizationLayer
+    reluLayer
+    %maxPooling2dLayer(2,'Stride',2)
+    functionLayer(@(X) my_haar2t(X))
+    % 90 x 120
+
+    % Fourth convolutional layer
+    convolution2dLayer(3,16,'Padding','same')
+    batchNormalizationLayer
+    reluLayer
+    %maxPooling2dLayer(2,'Stride',2)
+    functionLayer(@(X) my_haar2t(X))
+    % 45 x 60
+
+    % ------------------------------------------------------
+    % UP-SAMPLING LAYERS
+    % 'Tranposed deconvolution' for up-sampling by a factor of 2
+    transposedConv2dLayer(4,16,'Stride',2,'Cropping',1)
+    reluLayer
+
+    % Second 'Tranposed deconvolution' for up-sampling by a factor of 2
+    transposedConv2dLayer(4,8,'Stride',2,'Cropping',1)
+    reluLayer
+    
+    % Third up-sampling by a factor of 2
+    transposedConv2dLayer(4,4,'Stride',2,'Cropping',1)
+    reluLayer
+
+    % Fourth up-sampling by a factor of 2
+    transposedConv2dLayer(4,2,'Stride',2,'Cropping',1)
+    reluLayer
+
+    % ------------------------------------------------------
+    % PIXEL CLASSIFICATION LAYER
+    % Classifies an image same size as the input
+    % (Except that channel numbers goes from 3 --> large (num. filters)
+
+    % Squeeze the number of feature maps to 31
+    convolution2dLayer(1,31)
+
+    % Softmax layer, turn activation values into PDF
+    softmaxLayer
+
+    % Tie each pixel to its predicted class, measure loss
+    pixelClassificationLayer];
+
+% Image segmentation model
+neural_net = trainNetwork(training_data, wavelet_layers, options);
+
+
+%% Helper functions
+
+function X_ll = my_haar2t(X)
+    [X_ll, ~, ~, ~] = haart2(X, 1);
+end
