@@ -100,7 +100,7 @@ labelIDs = [ ...
     192 192 000; ... % "VegetationMisc"
     064 192 000];    % "Wall"
 
-% Image sizes are 960 x 720 pixels
+% Image sizes are 720x960x3 pixels (RGB)
 camvid_datastore = imageDatastore(imageDir);
 camvid_labelstore = pixelLabelDatastore(labelDir, classNames, labelIDs);
 
@@ -121,46 +121,51 @@ layers = [
     % ------------------------------------------------------
     % DOWN-SAMPLING LAYERS
     % Input layer (RGB images)
-    imageInputLayer([960, 720, 3])
+    imageInputLayer([720, 960, 3])
 
     % First convolutional layer, 2 3x3 filters
-    % Creates 32 feature maps
-    convolution2dLayer(3,2,'Padding',1)
+    % Creates 2 feature maps
+    convolution2dLayer(3,2,'Padding','same')
     % Activation function
     reluLayer
     % Down-sample by a factor of 2: max pooling layer (2x2)
     maxPooling2dLayer(2,'Stride',2)
+    % 360 x 480
 
     % Second convolutional layer, 4 3x3 filters
-    % Creates 32 feature maps
-    convolution2dLayer(3,4,'Padding',1)
+    convolution2dLayer(3,4,'Padding','same')
     reluLayer
     maxPooling2dLayer(2,'Stride',2)
+    % 180 x 240
 
     % Third convolutional layer, 8 3x3 filters
-    % Creates 32 feature maps
-    convolution2dLayer(3,8,'Padding',1)
+    convolution2dLayer(3,8,'Padding','same')
     reluLayer
     maxPooling2dLayer(2,'Stride',2)
+    % 90 x 120
+
+    % Fourth convolutional layer, 16 3x3 filters
+    convolution2dLayer(3,16,'Padding','same')
+    reluLayer
+    maxPooling2dLayer(2,'Stride',2)
+    % 45 x 60
 
     % ------------------------------------------------------
     % UP-SAMPLING LAYERS
     % 'Tranposed deconvolution' for up-sampling by a factor of 2
-    transposedConv2dLayer(3,8,'Stride',2,'Cropping',1)
+    transposedConv2dLayer(4,16,'Stride',2,'Cropping',1)
+    reluLayer
 
-    % Activation function
+    % Second 'Tranposed deconvolution' for up-sampling by a factor of 2
+    transposedConv2dLayer(4,8,'Stride',2,'Cropping',1)
     reluLayer
     
-    % Second up-sampling by a factor of 2
-    transposedConv2dLayer(3,4,'Stride',2,'Cropping',1)
-
-    % Activation function
+    % Third up-sampling by a factor of 2
+    transposedConv2dLayer(4,4,'Stride',2,'Cropping',1)
     reluLayer
 
-    % Third up-sampling by a factor of 2
-    transposedConv2dLayer(3,2,'Stride',2,'Cropping',1)
-
-    % Activation function
+    % Fourth up-sampling by a factor of 2
+    transposedConv2dLayer(4,2,'Stride',2,'Cropping',1)
     reluLayer
 
     % ------------------------------------------------------
@@ -179,20 +184,11 @@ layers = [
 
 options = trainingOptions('sgdm', ...
     'InitialLearnRate',0.01, ...
-    'MaxEpochs',4, ...
+    'MaxEpochs', 4, ...
     'Shuffle', 'every-epoch', ...
-    'MiniBatchSize',64, ...
+    'MiniBatchSize', 16, ...
     'Verbose', false, ...
     'Plots', 'training-progress');
 
 % Image segmentation model
 neural_net = trainNetwork(training_data, layers, options);
-
-% Final accuracy stats
-% Make predictions of test data
-%predictions = classify(neural_net, test_data);
-
-% What are the REAL labels of the data?
-%validation = test_data.Labels;
-
-%accuracy = sum(predictions == validation)/numel(validation);
