@@ -71,18 +71,3 @@ axis equal
 set(gca,'XTick',[], 'YTick', [])
 xlim([0, 424])
 ylim([0, 200])
-
-
-%% Haar Transform CamVid images
-
-% CamVid images
-imageURL = 'http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/files/701_StillsRaw_full.zip';
-
-% Labels
-labelURL = 'http://web4.cs.ucl.ac.uk/staff/g.brostow/MotionSegRecData/data/LabeledApproved_full.zip';
-
-% Filepaths
-%outputFolder = fullfile(tempdir, 'CamVid');
-outputFolder = 'C:\Users\sminor2848\Documents';
-imageDir = fullfile(outputFolder,'camvid_pics\701_StillsRaw_full');
-labelDir = fullfile(outputFolder,'camvid_labels');
